@@ -1,0 +1,2 @@
+import User from '../models/User.js';
+export const updateProfile=async(req,res)=>{const allowed=['name','profile'];const updates=Object.fromEntries(Object.entries(req.body).filter(([k])=>allowed.includes(k)));const user=await User.findByIdAndUpdate(req.user._id,updates,{new:true,runValidators:true});res.json({user:{id:user._id,name:user.name,email:user.email,role:user.role,profile:user.profile},message:'Profile updated'});};
