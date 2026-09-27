@@ -1,4 +1,5 @@
 import test from'node:test';import assert from'node:assert/strict';import request from'supertest';import jwt from'jsonwebtoken';import app from'../app.js';import User from'../models/User.js';import Job from'../models/Job.js';import Application from'../models/Application.js';
+import{normalizeMatchResult}from'../services/aiMatchService.js';
 process.env.JWT_SECRET='unit-test-secret';process.env.NODE_ENV='test';
 test('health route responds without database access',async()=>{const r=await request(app).get('/api/health');assert.equal(r.status,200);assert.equal(r.body.status,'ok')});
 test('unknown API route returns structured 404',async()=>{const r=await request(app).get('/api/missing');assert.equal(r.status,404);assert.match(r.body.message,/Route not found/)});
@@ -6,3 +7,4 @@ test('registration validation rejects malformed input before database access',as
 test('protected endpoint rejects missing token',async()=>{const r=await request(app).get('/api/jobs/mine');assert.equal(r.status,401);assert.equal(r.body.message,'Authentication required')});
 test('JWT claims preserve identity and role',()=>{const token=jwt.sign({id:'507f1f77bcf86cd799439011',role:'recruiter'},process.env.JWT_SECRET);const claims=jwt.verify(token,process.env.JWT_SECRET);assert.equal(claims.role,'recruiter')});
 test('models enforce essential validation rules',()=>{const user=new User({name:'A',email:'invalid',password:'short'});const userError=user.validateSync();assert.ok(userError.errors.name);assert.ok(userError.errors.password);const job=new Job({});assert.ok(job.validateSync().errors.title);const application=new Application({resumeUrl:'https://example.com/resume'});assert.ok(application.validateSync().errors.job)});
+test('AI match output is normalized and bounded',()=>{const result=normalizeMatchResult({score:140,summary:'Strong match',strengths:['React'],missingSkills:['AWS'],recommendations:['Build a cloud project'],interviewQuestions:['Explain hooks']});assert.equal(result.score,100);assert.equal(result.summary,'Strong match');assert.deepEqual(result.strengths,['React'])});

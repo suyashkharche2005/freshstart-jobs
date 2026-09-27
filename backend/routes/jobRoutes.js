@@ -1,10 +1,12 @@
 import{Router}from'express';import{body}from'express-validator';import{protect,allow}from'../middleware/auth.js';import{validate}from'../middleware/validate.js';import*as controller from'../controllers/jobController.js';
+import{matchJob}from'../controllers/aiController.js';
 const router=Router();
 const jobRules=[body('title').trim().notEmpty(),body('company').trim().notEmpty(),body('location').trim().notEmpty(),body('description').isLength({min:30}).withMessage('Description must have at least 30 characters'),body('experience').trim().notEmpty()];
 router.get('/',controller.listJobs);
 router.get('/mine',protect,allow('recruiter'),controller.recruiterJobs);
 router.get('/stats',protect,allow('recruiter'),controller.recruiterStats);
 router.get('/saved',protect,allow('candidate'),controller.savedJobs);
+router.post('/:id/ai-match',protect,allow('candidate'),matchJob);
 router.get('/:id',controller.getJob);
 router.post('/',protect,allow('recruiter'),jobRules,validate,controller.createJob);
 router.put('/:id',protect,allow('recruiter'),jobRules,validate,controller.updateJob);

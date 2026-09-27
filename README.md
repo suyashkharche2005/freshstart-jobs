@@ -8,28 +8,31 @@ FreshStart is a portfolio-ready MERN job portal focused on fresher and early-car
 - JWT authentication persistence and bcrypt password hashing
 - Candidate profiles with skills, portfolio, GitHub, and bio
 - Job search, location/work-mode/type filters, sorting-ready API, and pagination
-- Saved jobs and one-click removal
+- Dedicated saved-jobs page with one-click removal
 - Applications with resume links, cover notes, and status tracking
 - Recruiter job CRUD with destructive-action confirmation
 - Applicant pipeline: applied, reviewing, shortlisted, rejected, hired
+- AI-powered candidate-to-job match score, strengths, skill gaps, recommendations, and interview questions
+- Cached AI analyses that automatically expire when the candidate profile or job changes
+- BullMQ and Redis background notifications with retry, backoff, and idempotency
 - Responsive landing page, dashboards, loading/empty/error states, and 404 page
 - Frontend and backend validation plus centralized API error handling
 - Realistic seed data and API integration tests
 
 ## Tech stack
 
-React 19, Vite, React Router, Axios, modern CSS, Node.js, Express 5, MongoDB, Mongoose, JWT, bcrypt, express-validator, Node test runner, Supertest, and mongodb-memory-server.
+React 19, Vite, React Router, Axios, modern CSS, Node.js, Express 5, MongoDB, Mongoose, JWT, bcrypt, OpenRouter, BullMQ, Redis, express-validator, Node test runner, Supertest, and mongodb-memory-server.
 
 ## Architecture
 
-The React single-page application calls a REST API through a centralized Axios client. Express routes apply validation, authentication, and role middleware before controllers access Mongoose models. MongoDB stores users, jobs, saved-job relationships, and applications. Password hashes and environment secrets remain server-side.
+The React single-page application calls a REST API through a centralized Axios client. Express routes apply validation, authentication, and role middleware before controllers access Mongoose models. MongoDB stores users, jobs, saved-job relationships, applications, notifications, and cached AI match analyses. BullMQ uses Redis for asynchronous application-status notifications. The AI endpoint sends only selected profile and job fields to OpenRouter; API keys, password hashes, and environment secrets remain server-side.
 
 ## Folder structure
 
 ```text
 freshstart-jobs/
 ├── backend/
-│   ├── config/ controllers/ middleware/ models/ routes/ scripts/ tests/ utils/
+│   ├── config/ controllers/ middleware/ models/ queues/ routes/ scripts/ services/ tests/ utils/ workers/
 │   ├── app.js
 │   └── server.js
 ├── frontend/
@@ -52,7 +55,7 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 
-Set `MONGODB_URI` and a long random `JWT_SECRET` in `backend/.env`. Never commit the `.env` files.
+Set `MONGODB_URI`, a long random `JWT_SECRET`, `REDIS_URL`, and `OPENROUTER_API_KEY` in `backend/.env`. `OPENROUTER_MODEL` is configurable. Never commit the `.env` files.
 
 ## Run locally
 
@@ -88,6 +91,7 @@ The integration test database runs in memory and does not modify development dat
 | Auth | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me` |
 | Profile | `PUT /api/users/profile` |
 | Jobs | `GET/POST /api/jobs`, `GET/PUT/DELETE /api/jobs/:id`, `GET /api/jobs/mine` |
+| AI match | `POST /api/jobs/:id/ai-match` |
 | Saved jobs | `POST /api/jobs/:id/save`, `GET /api/jobs/saved` |
 | Applications | `POST /api/applications/:jobId`, `GET /api/applications/mine` |
 | Recruiting | `GET /api/applications/job/:jobId`, `PATCH /api/applications/:id/status` |
@@ -105,5 +109,5 @@ The integration test database runs in memory and does not modify development dat
 - Email verification, forgot-password flow, and refresh-token rotation
 - Recruiter/company verification and job moderation
 - Email notifications and interview scheduling
-- Advanced skill matching and job recommendations
+- Semantic job recommendations and resume-text analysis
 - Deployment pipeline, monitoring, and rate limiting
